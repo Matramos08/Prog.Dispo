@@ -1,66 +1,144 @@
-<script setup lang="ts">
-import HelloWorld from "./components/HelloWorld.vue";
-import TheWelcome from "./components/TheWelcome.vue";
-import { ref } from "vue";
-const id = ref(2);
-const textoParaAdicionar = ref("");
-const headers = ref([{id: 1, texto: "conseguiu!"}])
+<script setup>
+import { ref } from 'vue'
 
-function adicionar() {
-if (!textoParaAdicionar.value) return;
-headers.value.push({id: id.value, texto: textoParaAdicionar.value});
-id.value++;
-textoParaAdicionar.value = "";
+let id = 0
+
+const listas = ref([
+  {
+    idLista: 1,
+    newTodo: '',
+    hideCompleted: false,
+    todos: [
+      { id: id++, text: 'Aprender HTML', done: true },
+      { id: id++, text: 'Aprender JavaScript', done: true },
+      { id: id++, text: 'Aprender Vue', done: false }
+    ]
+  }
+])
+
+function clonarLista() {
+  const listaOriginal = listas.value[0]
+  const copiaDasTarefas = JSON.parse(JSON.stringify(listaOriginal.todos))
+  
+  listas.value.push({
+    idLista: Date.now(),
+    newTodo: '',
+    hideCompleted: false,
+    todos: copiaDasTarefas
+  })
+}
+
+function addTodo(lista) {
+  if (lista.newTodo === '') return
+  lista.todos.push({ id: id++, text: lista.newTodo, done: false })
+  lista.newTodo = ''
+}
+
+function removeTodo(lista, todo) {
+  lista.todos = lista.todos.filter((t) => t !== todo)
+}
+
+function filteredTodos(lista) {
+  if (lista.hideCompleted) {
+    return lista.todos.filter((t) => !t.done)
+  }
+  return lista.todos
 }
 </script>
 
 <template>
-<header>
-<img
-alt="Vue logo"
-class="logo"
-src="./assets/logo.svg"
-width="125"
-height="125"
-/>
+  <div class="site">
+    
+    <h1>Minhas Listas de Tarefas</h1>
+    
+    <button class="botao-clonar" @click="clonarLista">
+      Copiar lista
+    </button>
 
-<div class="wrapper">
-<HelloWorld v-for="mensagem in headers" :msg="mensagem.texto" :key="mensagem.id"/>
-</div>
-</header>
+    <hr />
 
-<main>
-<TheWelcome />
-<input v-model="textoParaAdicionar">
-<button @click="adicionar">criar texto</button>
-</main>
+    <div v-for="(lista, index) in listas" :key="lista.idLista" class="bloco-lista">
+      
+      <h2>Lista número {{ index + 1 }}</h2>
+
+      <form @submit.prevent="addTodo(lista)">
+        <input v-model="lista.newTodo" required placeholder="Escreva aqui..." class="campo-texto">
+        <button class="botao-add">Adicionar</button>
+      </form>
+
+      <ul>
+        <li v-for="todo in filteredTodos(lista)" :key="todo.id" class="linha-tarefa">
+          <input type="checkbox" v-model="todo.done">
+          <span :class="{ riscado: todo.done }">{{ todo.text }}</span>
+          <button class="botao-remover" @click="removeTodo(lista, todo)">remover</button>
+        </li>
+      </ul>
+
+      <button class="botao-ocultar" @click="lista.hideCompleted = !lista.hideCompleted">
+        {{ lista.hideCompleted ? 'Mostrar todas' : 'Ocultar terminadas' }}
+      </button>
+
+    </div>
+
+  </div>
 </template>
 
 <style scoped>
-header {
-line-height: 1.5;
+.site {
+  font-family: sans-serif; 
+  max-width: 500px;       
+  margin: 0 auto;         
+  padding: 20px;
 }
 
-.logo {
-display: block;
-margin: 0 auto 2rem;
+h2 {
+  color: #333;
+  margin-top: 0;
 }
 
-@media (min-width: 1024px) {
-header {
-display: flex;
-place-items: center;
-padding-right: calc(var(--section-gap) / 2);
+.campo-texto {
+  padding: 5px;
+  font-size: 14px;
 }
 
-.logo {
-margin: 0 2rem 0 0;
+.botao-add {
+  background-color: #008CBA;
+  color: white;
 }
 
-header .wrapper {
-display: flex;
-place-items: flex-start;
-flex-wrap: wrap;
+.botao-clonar {
+  color: rgb(0, 0, 0);
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
 }
+
+.linha-tarefa {
+  margin: 10px 0;
+}
+
+.riscado {
+  text-decoration: line-through;
+  color: gray;
+}
+
+.botao-remover {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 2px 6px;
+  font-size: 11px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.botao-ocultar {
+  background-color: #ddd;
+  border: none;
+  padding: 5px 10px;
+  margin-top: 10px;
+  cursor: pointer;
 }
 </style>
